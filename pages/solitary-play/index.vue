@@ -52,6 +52,7 @@
 			type="default" :disabled="play_card_btn_disabled">出牌</button>
 			<button v-if="stage !== 4" id="joker_btn" :disabled="joker_number === 2" type="default">小丑牌({{joker_number}}/2)</button>
 			<button v-if="stage === 4" id="discard_btn" type="warn">弃牌</button>
+			<button type="default" id="restart_btn">重新开始</button>
 		</view>
 		<scroll-view scroll-x="true" class="hand_area" @click="chose_card($event)">
 			<view class="card_body">
@@ -130,6 +131,7 @@
 				this.king = this.king_cards.shift();
 				this.remove_cards = obj.remove_cards;
 				this.tovern_cards = obj.tovern_cards;
+				this.joker_number = 0;
 			},
 			//将中转区的牌推入弃牌区;
 			push_transit_to_discard(){
@@ -139,8 +141,10 @@
 			//结束游戏
 			end_game(){
 				this.wrapper_show = true;
-				wx.showModal({
-					content:"游戏结束,你已阵亡",
+				wx.showToast({
+				  title: '你已阵亡',
+				  icon: 'error',
+				  duration: 2000
 				})
 			},
 			//选择牌
@@ -161,7 +165,7 @@
 				}
 			},
 			click_btn(e){
-				let drawing_cards_transit,hand,points;//中转变量
+				let drawing_cards_transit,hand,points,this_ = this;//中转变量
 				//事件委托
 				switch(e.target.id){
 					//出牌
@@ -232,44 +236,76 @@
 						
 						//开始判定
 						//荣誉击杀boss 进入酒馆
-						if(this.king.life === 0){
+						if(this.king.life <= 0){
+							// 获得游戏胜利 
+							if(this.king_cards.length === 0){
+								wx.showModal({
+									content:"您已刺杀玩所有君王，太厉害了",
+									showCancel:false,
+									confirmText:"重新开始",
+									success:()=>{
+										this_.init()
+									}
+								})
+								return;
+							}
+							
 							let new_card = {
 								color:this.king.color,
 								number:this.king.number,
 								chosen:false
 							}
-							this.tovern_cards.unshift(new_card);
-							this.all_cards_number += 1;
-							this.remove_cards = this.remove_cards.concat(this.transit_cards);
-							this.transit_cards = [];
-							this.king = this.king_cards.shift();
-						}
-						//超杀boss进入弃牌堆
-						else if(this.king.life < 0){
-							let new_card = {
-								color:this.king.color,
-								number:this.king.number,
-								chosen:false
+							if(this.king.life === 0){
+								this.tovern_cards.unshift(new_card);
 							}
 							this.all_cards_number += 1;
 							this.remove_cards = this.remove_cards.concat(this.transit_cards);
 							this.transit_cards = [];
-							this.remove_cards.unshift(new_card);
+							if(this.king.life < 0){
+								this.remove_cards.unshift(new_card);
+							}
 							this.king = this.king_cards.shift();
 						}
 						//boss没有阵亡进入第四阶段
 						else{
 							if(this.king.attack === 0){
 								this.stage = 1;
+								this.push_transit_to_discard();
 								return;
 							}
+							
 							this.stage = 4;
 							//首先判断玩家所有点数够不够boss攻击力;
 							points = this.hand_cards.reduce((preval,card)=>{
 								return preval + card_number2number(card.number);
 							},0)
 							if(this.king.attack >= points){
-								this.end_game();
+								let flag = false;
+								while(this.joker_number < 2){
+									wx.showToast({
+										title:"已自动触发joker牌"
+									})
+									this.joker_number += 1;
+									this.king.immune = false;
+									this.hand_cards = this.hand_cards.map((val)=>{
+										val.chosen = false;
+										val.given = false;
+										return val;
+									})
+									this.transit_cards = this.transit_cards.concat(this.hand_cards);
+									this.hand_cards = this.tovern_cards.splice(0,8);
+									this.push_transit_to_discard();
+									points = this.hand_cards.reduce((preval,card)=>{
+										return preval + card_number2number(card.number);
+									},0);
+									if(this.king.attack < points){
+										flag = true;
+										break;
+									}
+								}
+								if(!flag){
+									this.end_game();
+								}
 							}
 						}
 						break;
@@ -323,8 +359,19 @@
 							this.end_game();
 						}
 						
-						
 						this.stage = 1;
+						break;
+					case  "restart_btn":
+						wx.showModal({
+							content:"你确定要重新开始吗?",
+							success:(res)=>{
+								if(res.confirm){
+									this_.init();
+								}else{return;}
+							},
+						})
+						break;
+					default:
 						break;
 				}
 			},
@@ -371,6 +418,7 @@
 			@include size(300rpx,600rpx);
 			display: flex;
 			flex-direction: column;
+			background-color: rgb(239,139,200);
 			
 			.head_flag{
 				@include size(100%,100rpx);
@@ -411,7 +459,7 @@
 		
 		.card_store{
 			@include size(450rpx,600rpx);
-			border: 1rpx solid black;
+			// border: 1rpx solid black;
 			
 			.discard_pile{
 				@include size(100%,50%);
@@ -419,6 +467,7 @@
 				display:  flex;
 				flex-wrap: wrap;
 				justify-content: center;
+				background-color: rgb(92,201,212);
 				
 				.discard_title{
 					@include size(100%,50rpx);
@@ -475,6 +524,7 @@
 				display:  flex;
 				flex-wrap: wrap;
 				justify-content: center;
+				background-color: rgb(255,250,232);
 				
 				.tavern_title{
 					@include size(100%,50rpx);
@@ -535,6 +585,11 @@
 			}
 			
 			#discard_btn{
+				@include size(auto,80rpx);
+				font-size: 30rpx;
+			}
+			
+			#restart_btn{
 				@include size(auto,80rpx);
 				font-size: 30rpx;
 			}

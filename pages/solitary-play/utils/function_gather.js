@@ -95,38 +95,38 @@ function check_the_drawing_cards(arr){
 	// 把点数先提出来
 	let num_list = [];
 	for(let card of arr){
-		if(card.color === "joker"){
-			num_list.push(0);
-			continue;
-		}
 		num_list.push(card_number2number(card.number))
 	}
-	//合计点数不能大于10
-	if(num_list.reduce((preval,curval)=>{
-		return preval + curval;
-	},0) >= 10){
+	
+	let temp_set = new Set(num_list);
+	if(temp_set.size === 1){
+		let total = num_list.reduce((preval,curval)=>{
+			return preval + curval;
+		},0);
+		if(total > 10){
+			return {
+				flag:false,
+				message:"出牌点数应不超过10"
+			}
+		}
+	}else if(temp_set.size === 2){
+		if(!num_list.includes(1)){
+			return {
+				flag:false,
+				message:"出牌不符合规则"
+			}
+		}else{
+			if(num_list.length > 2){
+				return {
+					flag:false,
+					message:"出牌不符合规则"
+				}
+			}
+		}
+	}else if(temp_set.size >= 3){
 		return {
 			flag:false,
-			message:"打出多张牌时点数应小于10"
-		}
-	}
-	
-	//判断没有A的情况
-	if(!num_list.includes(1)){
-		let temp = new Set(num_list);
-		if(temp.size >= 2){
-			return {
-				flag:false,
-				message:"不能打除宠物牌以外不同点数的牌"
-			}
-		}
-	}else{
-		let temp = new Set(num_list);
-		if(temp.size >= 3){
-			return {
-				flag:false,
-				message:"不能打除宠物牌以外不同点数的牌"
-			}
+			message:"出牌不符合规则"
 		}
 	}
 	
