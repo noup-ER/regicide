@@ -9,7 +9,7 @@
 			<image src="../../static/svg/crown.svg" v-show="king.immune" class="head_flag"></image>
 			<image src="../../static/svg/no_immune.svg" v-show="!king.immune" class="head_flag"></image>
 			<view class="king_seat">
-				<image :src="`http://www.userect.top/cards/${king.color}-${king.number}.png`" class="king_card"></image>
+				<image :src="`${url_prefix}/images/cards/${king.color}-${king.number}.png`" class="king_card"></image>
 			</view>
 			<view class="king_condition">
 				<image src="../../static/svg/sword.svg" class="sword"></image>
@@ -23,8 +23,8 @@
 				<view class="discard_title">弃牌堆</view>
 				<view class="discard_an">
 					<view class="an" :style="{'width':discard_width}">
-						<image v-if="remove_cards.length === 0" src="http://www.userect.top/cover.png" class="an_cover" mode=""></image>
-						<image v-else :src="`http://www.userect.top/cards/${remove_cards[0].color}-${remove_cards[0].number}.png`" class="an_cover" mode=""></image>
+						<image v-if="remove_cards.length === 0" src="${url_prefix}/cover.png" class="an_cover" mode=""></image>
+						<image v-else :src="`${url_prefix}/cards/${remove_cards[0].color}-${remove_cards[0].number}.png`" class="an_cover" mode=""></image>
 					</view>
 				</view>
 				<view class="discard_data">
@@ -57,7 +57,7 @@
 		<scroll-view scroll-x="true" class="hand_area" @click="chose_card($event)">
 			<view class="card_body">
 				<view class="card" v-for="(item,index) in hand_cards" :id="`card`+index" :key = "'card_' + index" :class="{'card_chosen':item.chosen,'card_given':item.given}">
-					<image :id="`card`+index" :src="`http://www.userect.top/cards/${item.color}-${item.number}.png`"></image>
+					<image :id="`card`+index" :src="`${url_prefix}/images/cards/${item.color}-${item.number}.png`"></image>
 				</view>
 			</view>
 		</scroll-view>
@@ -67,6 +67,7 @@
 <script>
 	import beer from "../../components/beer.vue";
 	const {refrush_cards,init,check_the_drawing_cards,create_mass,card_number2number} = require("./utils/function_gather.js");
+	const {url_prefix} = require("./utils/variate.js");
 	
 	export default{
 		components:{
@@ -89,7 +90,8 @@
 				tovern_cards:[],	//酒馆区
 				transit_cards:[],	//打出去的手牌中转区
 				joker_number:0,		//小丑牌使用次数
-				wrapper_show:false  //控制遮罩层
+				wrapper_show:false,  //控制遮罩层
+				url_prefix
 			}
 		},
 		created(){

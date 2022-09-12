@@ -1,6 +1,6 @@
 <template>
 	<view class="home">
-		<image src="http://www.userect.top/sword.jpeg" class="cover"></image>
+		<image src="https://www.userect.top/images/sword.jpeg" class="cover"></image>
 		<navigator url="../solitary-play/index">
 			<button class="logo_btn" type="default">单人游戏</button>
 		</navigator>
